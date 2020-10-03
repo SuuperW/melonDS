@@ -88,6 +88,7 @@ void DeInit()
     if (Firmware) delete[] Firmware;
 }
 
+
 u32 FixFirmwareLength(u32 originalLength)
 {
     if (originalLength != 0x20000 && originalLength != 0x40000 && originalLength != 0x80000)
@@ -111,25 +112,30 @@ u32 FixFirmwareLength(u32 originalLength)
     return originalLength;
 }
 
-void Reset()
+void LoadDefaultFirmware(){
+    FirmwareLength = 0x20000;
+    Firmware = new u8[FirmwareLength];
+    memset(Firmware, 0xFF, FirmwareLength);
+    FirmwareMask = FirmwareLength - 1;
+
+    u32 userdata = 0x7FE00 & FirmwareMask;
+
+    memset(Firmware + userdata, 0, 0x74);
+
+    // user settings offset
+    *(u16*)&Firmware[0x20] = (FirmwareLength - 0x200) >> 3;
+
+    Firmware[userdata+0x00] = 5; // version
+    Firmware[userdata+0x1A] = 7; // name length
+    Firmware[userdata+0x64] = 1; // english
+
+    // set user name
+    u8 name[] = "M\0e\0l\0o\0n\0D\0S";
+    memcpy(Firmware + userdata + 0x06, name, 13);
+}
+
+void LoadFirmwareFromFile(FILE* f)
 {
-    if (Firmware) delete[] Firmware;
-    Firmware = NULL;
-
-    if (NDS::ConsoleType == 1)
-        strncpy(FirmwarePath, Config::DSiFirmwarePath, 1023);
-    else
-        strncpy(FirmwarePath, Config::FirmwarePath, 1023);
-
-    FILE* f = Platform::OpenLocalFile(FirmwarePath, "rb");
-    if (!f)
-    {
-        printf("Firmware not found\n");
-
-        // TODO: generate default firmware
-        return;
-    }
-
     fseek(f, 0, SEEK_END);
 
     FirmwareLength = FixFirmwareLength((u32)ftell(f));
@@ -154,6 +160,28 @@ void Reset()
         f = Platform::OpenLocalFile(firmbkp, "wb");
         fwrite(Firmware, 1, FirmwareLength, f);
         fclose(f);
+    }
+}
+
+void Reset()
+{
+    if (Firmware) delete[] Firmware;
+    Firmware = NULL;
+
+    if (NDS::ConsoleType == 1)
+        strncpy(FirmwarePath, Config::DSiFirmwarePath, 1023);
+    else
+        strncpy(FirmwarePath, Config::FirmwarePath, 1023);
+
+    FILE* f = Platform::OpenLocalFile(FirmwarePath, "rb");
+    if (!f)
+    {
+        printf("Firmware not found generating default one.\n");
+        LoadDefaultFirmware();
+    }
+    else
+    {
+        LoadFirmwareFromFile(f);
     }
 
     FirmwareMask = FirmwareLength - 1;
