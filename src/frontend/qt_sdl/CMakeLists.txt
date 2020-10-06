@@ -23,6 +23,7 @@ if (NOT AS_DLL)
         InputConfigDialog.cpp
         VideoSettingsDialog.cpp
         AudioSettingsDialog.cpp
+        FirmwareSettingsDialog.cpp
         WifiSettingsDialog.cpp
         InterfaceSettingsDialog.cpp
         Input.cpp
