@@ -24,7 +24,6 @@
 #include <QThread>
 #include <QSemaphore>
 #include <QMutex>
-#include <QOpenGLContext>
 
 #include "Platform.h"
 #include "PlatformConfig.h"

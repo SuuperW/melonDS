@@ -1,21 +1,8 @@
 project(qt_sdl)
 
 SET(SOURCES_QT_SDL
-    main.cpp
-    main_shaders.h
-	CheatsDialog.cpp
-    EmuSettingsDialog.cpp
-    InputConfigDialog.cpp
-    VideoSettingsDialog.cpp
-    AudioSettingsDialog.cpp
-    WifiSettingsDialog.cpp
-    InterfaceSettingsDialog.cpp
-    Input.cpp
     LAN_PCap.cpp
     LAN_Socket.cpp
-    OSD.cpp
-    OSD_shaders.h
-    font.h
     Platform.cpp
     PlatformConfig.cpp
     
@@ -23,13 +10,33 @@ SET(SOURCES_QT_SDL
     ArchiveUtil.cpp
 
     ../Util_ROM.cpp
-    ../Util_Video.cpp
-    ../Util_Audio.cpp
     ../FrontendUtil.h
     ../mic_blow.h
-
-    ../../../melon.qrc
 )
+
+if (NOT AS_DLL)
+    list(APPEND SOURCES_QT_SDL
+        main.cpp
+        main_shaders.h
+        CheatsDialog.cpp
+        EmuSettingsDialog.cpp
+        InputConfigDialog.cpp
+        VideoSettingsDialog.cpp
+        AudioSettingsDialog.cpp
+        WifiSettingsDialog.cpp
+        InterfaceSettingsDialog.cpp
+        Input.cpp
+        OSD.cpp
+        OSD_shaders.h
+        font.h
+
+        ../Util_Video.cpp
+        ../Util_Audio.cpp
+        ../../../melon.qrc
+    )
+else()
+    list(APPEND SOURCES_QT_SDL MelonAPI.cpp)
+endif()
 
 if (WIN32)
     set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
@@ -39,11 +46,17 @@ if (BUILD_STATIC AND QT5_STATIC_DIR)
     set(QT5_STATIC_BASE ${QT5_STATIC_DIR}/lib/cmake/Qt5)
     set(Qt5_DIR ${QT5_STATIC_BASE})
     set(Qt5Core_DIR ${QT5_STATIC_BASE}Core)
-    set(Qt5Gui_DIR ${QT5_STATIC_BASE}Gui)
-    set(Qt5Widgets_DIR ${QT5_STATIC_BASE}Widgets)
+    if (NOT AS_DLL)
+        set(Qt5Gui_DIR ${QT5_STATIC_BASE}Gui)
+        set(Qt5Widgets_DIR ${QT5_STATIC_BASE}Widgets)
+    endif()
 endif()
 
-find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
+if (NOT AS_DLL)
+    find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
+else()
+    find_package(Qt5 COMPONENTS Core REQUIRED)
+endif()
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -65,7 +78,9 @@ endif()
 pkg_check_modules(LIBARCHIVE REQUIRED libarchive)
 add_compile_definitions(ARCHIVE_SUPPORT_ENABLED)
 
-if (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Release))
+if (AS_DLL)
+    add_library(melonDS SHARED ${SOURCES_QT_SDL})
+elseif (WIN32 AND (CMAKE_BUILD_TYPE STREQUAL Release))
     add_executable(melonDS WIN32 ${SOURCES_QT_SDL})
 else()
     add_executable(melonDS ${SOURCES_QT_SDL})
@@ -99,7 +114,9 @@ elseif (WIN32)
     target_sources(melonDS PUBLIC "${CMAKE_SOURCE_DIR}/melon.rc")
 
     target_link_libraries(melonDS comctl32 d2d1 dwrite uxtheme ws2_32 iphlpapi gdi32)
-    if (BUILD_STATIC)
+	if (AS_DLL)
+        target_link_libraries(melonDS imm32 winmm version setupapi -static Qt5::Core zstd)
+    elseif (BUILD_STATIC)
         target_link_libraries(melonDS imm32 winmm version setupapi -static Qt5::Core Qt5::Gui Qt5::Widgets zstd)
     else()
         target_link_libraries(melonDS Qt5::Core Qt5::Gui Qt5::Widgets)

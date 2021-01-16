@@ -91,7 +91,12 @@ if (CMAKE_BUILD_TYPE STREQUAL Release)
 endif()
 
 if (WIN32)
-	option(BUILD_STATIC "Statically link dependencies" OFF)
+	option(AS_DLL "Create a DLL, with no frontend." OFF)
+	if (AS_DLL)
+		set(BUILD_STATIC ON)
+	else()
+		option(BUILD_STATIC "Statically link dependencies" OFF)
+	endif()
 endif()
 
 if (ENABLE_LTO)
