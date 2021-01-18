@@ -28,6 +28,10 @@ u8* loadedROM;
 s32 loadedROMSize;
 bool directBoot = true;
 
+u32 lastFrameButtons = 0;
+
+DLL void ResetCounters();
+
 DLL void Deinit()
 {
     Platform::DeInit();
@@ -59,6 +63,8 @@ DLL bool Init()
     }
     GPU::InitRenderer(0);
 
+    ResetCounters();
+
     // This will be temporary, used until MelonAPI exposes config options.
     GPU::RenderSettings renderSettings;
     renderSettings.Soft_Threaded = true;
@@ -79,4 +85,44 @@ DLL void LoadROM(u8* file, s32 fileSize)
     memcpy(loadedROM, file, fileSize);
 
     NDS::LoadROM(file, fileSize, directBoot);
+}
+
+DLL void ResetCounters()
+{
+    NDS::NumFrames = 0;
+    NDS::NumLagFrames = 0;
+}
+DLL int GetFrameCount() { return NDS::NumFrames; }
+DLL bool IsLagFrame() { return NDS::LagFrameFlag; }
+DLL int GetLagFrameCount() { return NDS::NumLagFrames; }
+
+DLL void SetFrameCount(u32 count) { NDS::NumFrames = count; }
+DLL void SetIsLagFrame(bool isLag) { NDS::LagFrameFlag = isLag; }
+DLL void SetLagFrameCount(u32 count) { NDS::NumLagFrames = count; }
+
+DLL void FrameAdvance(u32 buttons, u8 touchX, u8 touchY)
+{
+    if (!inited) return;
+
+    if (buttons & 0x2000)
+        NDS::TouchScreen(touchX, touchY);
+    else
+        NDS::ReleaseScreen();
+        
+    NDS::SetKeyMask(~buttons & 0xFFF); // 12 buttons
+    if (buttons & 0x4000)
+        NDS::SetLidClosed(false);
+    else if (buttons & 0x8000)
+        NDS::SetLidClosed(true);
+
+    if (buttons & 0x10000 && !(lastFrameButtons & 0x10000))
+    {
+        if (NDS::Running)
+            NDS::Stop();
+        else if (loadedROM)
+            NDS::LoadROM(loadedROM, loadedROMSize, directBoot);
+    }
+
+    NDS::RunFrame();
+    lastFrameButtons = buttons;
 }
