@@ -126,3 +126,8 @@ DLL void FrameAdvance(u32 buttons, u8 touchX, u8 touchY)
     NDS::RunFrame();
     lastFrameButtons = buttons;
 }
+
+DLL s32* GetTopScreenBuffer() { return (s32*)GPU::Framebuffer[GPU::FrontBuffer][0]; }
+DLL s32* GetBottomScreenBuffer() { return (s32*)GPU::Framebuffer[GPU::FrontBuffer][1]; }
+// Length in pixels.
+DLL s32 GetScreenBufferSize() { return 256 * 192; }
