@@ -132,3 +132,28 @@ DLL s32* GetTopScreenBuffer() { return (s32*)GPU::Framebuffer[GPU::FrontBuffer][
 DLL s32* GetBottomScreenBuffer() { return (s32*)GPU::Framebuffer[GPU::FrontBuffer][1]; }
 // Length in pixels.
 DLL s32 GetScreenBufferSize() { return 256 * 192; }
+
+DLL void SetOverrideFirmwareSettings(bool override)
+{
+    Config::FirmwareOverrideSettings = override;
+}
+// Lengths are character count. 2 bytes per character.
+DLL void SetFirmwareSettings(char* username, s32 usernameLength, char* message, s32 messageLength,
+    u8 language, u8 color, u8 month, u8 day)
+{
+    if (usernameLength > 10)
+        usernameLength = 10;
+    if (messageLength > 26)
+        messageLength = 26;
+    
+    memcpy(Config::FirmwareUsername, username, usernameLength * 2);
+    memset(Config::FirmwareUsername + usernameLength * 2, 0, sizeof(Config::FirmwareUsername) - usernameLength * 2);
+
+    memcpy(Config::FirmwareMessage, message, messageLength * 2);
+    memset(Config::FirmwareMessage + messageLength * 2, 0, sizeof(Config::FirmwareMessage) - messageLength * 2);
+
+    Config::FirmwareLanguage = language;
+    Config::FirmwareFavouriteColour = color;
+    Config::FirmwareBirthdayMonth = month;
+    Config::FirmwareBirthdayDay = day;
+}
