@@ -13,6 +13,7 @@
 #include "../../NDS.h"
 #include "../../Platform.h"
 #include "../../SPI.h"
+#include "../../SPU.h"
 #include "../../types.h"
 
 // This method is used by Platform.cpp, so we must include it here or make modifications there. Here's easier.
@@ -139,6 +140,31 @@ DLL s32* GetTopScreenBuffer() { return (s32*)GPU::Framebuffer[GPU::FrontBuffer][
 DLL s32* GetBottomScreenBuffer() { return (s32*)GPU::Framebuffer[GPU::FrontBuffer][1]; }
 // Length in pixels.
 DLL s32 GetScreenBufferSize() { return 256 * 192; }
+
+s32 sampleCount = -1;
+DLL int GetSampleCount()
+{
+    return sampleCount = SPU::GetOutputSize();
+}
+DLL void GetSamples(s16* data, s32 count)
+{
+    if (count != sampleCount)
+        throw "sample count mismatch; call GetSampleCount first";
+    if (SPU::ReadOutput(data, count) != count)
+        throw "sample count was less than expected";
+    sampleCount = -1;
+}
+DLL void DiscardSamples()
+{
+    SPU::DrainOutput();
+}
+
+// null samples is the same as giving 0 sample count
+DLL void SetMicSamples(s16* samples, s32 count)
+{
+    NDS::MicInputFrame(samples, count);
+}
+
 
 DLL void SetOverrideFirmwareSettings(bool override)
 {
