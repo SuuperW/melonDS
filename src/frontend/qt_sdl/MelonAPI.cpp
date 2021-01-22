@@ -12,6 +12,7 @@
 #include "../../GPU.h"
 #include "../../NDS.h"
 #include "../../Platform.h"
+#include "../../SPI.h"
 #include "../../types.h"
 
 // This method is used by Platform.cpp, so we must include it here or make modifications there. Here's easier.
@@ -121,7 +122,13 @@ DLL void FrameAdvance(u32 buttons, u8 touchX, u8 touchY)
         if (NDS::Running)
             NDS::Stop();
         else if (loadedROM)
+        {
+            // we want to keep any firmware settings the system has made
+            bool overrideConfig = Config::FirmwareOverrideSettings;
+            Config::FirmwareOverrideSettings = false;
             NDS::LoadROM(loadedROM, loadedROMSize, blankStr, directBoot);
+            Config::FirmwareOverrideSettings = overrideConfig;
+        }
     }
 
     NDS::RunFrame();
@@ -157,3 +164,18 @@ DLL void SetFirmwareSettings(char* username, s32 usernameLength, char* message, 
     Config::FirmwareBirthdayMonth = month;
     Config::FirmwareBirthdayDay = day;
 }
+DLL void EraseUserSettings(u8* firmwareData, s32 firmwareLength)
+{
+    // make sure we have a valid firmware length
+    if (SPI_Firmware::FixFirmwareLength((u32)firmwareLength) == firmwareLength)
+    {
+        u32 mask = firmwareLength - 1;
+        u32 userdata = 0x7FE00 & mask;
+        memset(firmwareData + userdata, 0xFF, 0x200);
+    }
+    // if not, do nothing
+    // the intended use case is to calculate a hash of the firmware to compare against the hash of a known good one
+    // in the case we have a bad length the hash will not match, which is what we want
+}
+
+DLL void SetDirectBoot(bool value) { directBoot = value; }
