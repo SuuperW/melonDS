@@ -12,6 +12,7 @@
 #include "../../GPU.h"
 #include "../../NDS.h"
 #include "../../Platform.h"
+#include "../../Savestate.h"
 #include "../../SPI.h"
 #include "../../SPU.h"
 #include "../../types.h"
@@ -205,3 +206,42 @@ DLL void EraseUserSettings(u8* firmwareData, s32 firmwareLength)
 }
 
 DLL void SetDirectBoot(bool value) { directBoot = value; }
+
+DLL bool UseSavestate(u8* data, s32 len)
+{
+    Savestate* state = new Savestate(data, len);
+    if (!state->Error)
+        NDS::DoSavestate(state);
+    bool error = state->Error;
+    delete state;
+    return !error;
+}
+
+Savestate* _loadedState;
+u8* stateData;
+s32 stateLength = -1;
+DLL int GetSavestateSize()
+{
+    if (_loadedState) delete _loadedState;
+
+    _loadedState = new Savestate(NULL, true);
+    NDS::DoSavestate(_loadedState);
+    stateData = _loadedState->GetData();
+    stateLength = _loadedState->GetDataLength();
+
+    return stateLength;
+}
+DLL void GetSavestateData(u8* data, s32 size)
+{
+    if (size != stateLength)
+        throw "size mismatch; call GetSavestateSize first";
+    if (stateData)
+    {
+        memcpy(data, stateData, stateLength);
+        delete _loadedState;
+        _loadedState = NULL;
+        stateData = NULL;
+        stateLength = -1;
+    }
+}
+
