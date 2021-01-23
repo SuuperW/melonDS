@@ -11,6 +11,7 @@
 #include "../../Config.h"
 #include "../../GPU.h"
 #include "../../NDS.h"
+#include "../../NDSCart_SRAMManager.h"
 #include "../../Platform.h"
 #include "../../Savestate.h"
 #include "../../SPI.h"
@@ -245,3 +246,27 @@ DLL void GetSavestateData(u8* data, s32 size)
     }
 }
 
+DLL s32 GetSRAMLength()
+{
+    return (s32)NDSCart_SRAMManager::SecondaryBufferLength;
+}
+DLL void GetSRAM(u8* dst, s32 size)
+{
+    if (!inited) return;
+
+    if (size != NDSCart_SRAMManager::SecondaryBufferLength)
+        throw "SRAM size mismatch; call GetSRAMLength first";
+    NDSCart_SRAMManager::FlushSecondaryBuffer(dst, size);
+}
+DLL void SetSRAM(u8* src, s32 size)
+{
+    if (!inited) return;
+
+    if (size != NDSCart_SRAMManager::SecondaryBufferLength)
+        throw "SRAM size mismatch; call GetSRAMLength first";
+    NDSCart_SRAMManager::UpdateBuffer(src, size);
+}
+DLL bool IsSRAMModified()
+{
+    return NDSCart_SRAMManager::NeedsFlush();
+}
