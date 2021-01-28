@@ -51,6 +51,8 @@ char DSiSDPath[1024];
 
 int RandomizeMAC;
 
+int TimeAtBoot;
+
 #ifdef JIT_ENABLED
 int JIT_Enable = false;
 int JIT_MaxBlockSize = 32;
@@ -84,6 +86,8 @@ ConfigEntry ConfigFile[] =
 
     {"RandomizeMAC", 0, &RandomizeMAC, 0, NULL, 0},
 
+    {"TimeAtBoot", 0, &TimeAtBoot, 0, NULL, 0},
+    
 #ifdef JIT_ENABLED
     {"JIT_Enable", 0, &JIT_Enable, 0, NULL, 0},
     {"JIT_MaxBlockSize", 0, &JIT_MaxBlockSize, 32, NULL, 0},
