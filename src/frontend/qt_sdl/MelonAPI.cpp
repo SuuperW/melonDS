@@ -35,6 +35,8 @@ bool directBoot = true;
 
 u32 lastFrameButtons = 0;
 
+bool threadedRender = true;
+
 DLL void ResetCounters();
 
 DLL void Deinit()
@@ -66,21 +68,34 @@ DLL bool Init()
         printf("Failed to init NDS.");
         return false;
     }
+
     GPU::InitRenderer(0);
+    GPU::RenderSettings renderSettings;
+    renderSettings.Soft_Threaded = threadedRender;
+    GPU::SetRenderSettings(0, renderSettings);
 
     ResetCounters();
-
-    // This will be temporary, used until MelonAPI exposes config options.
-    GPU::RenderSettings renderSettings;
-    renderSettings.Soft_Threaded = true;
-    GPU::SetRenderSettings(0, renderSettings);
-    strcpy(Config::BIOS7Path, "melon/bios7.bin");
-    strcpy(Config::BIOS9Path, "melon/bios9.bin");
-    strcpy(Config::FirmwarePath, "melon/firmware.bin");
 
 	inited = true;
 	return true;
 }
+
+DLL void SetPaths(char* bios7, s32 bios7Len, char* bios9, s32 bios9Len, char* firmware, s32 firmwareLen)
+{
+    if (bios7Len > 1023) bios7Len = 1023;
+    if (bios9Len > 1023) bios9Len = 1023;
+    if (firmwareLen > 1023) firmwareLen = 1023;
+    
+    bios7[bios7Len] = '\0';
+    bios9[bios9Len] = '\0';
+    firmware[firmwareLen] = '\0';
+
+    strcpy(Config::BIOS7Path, bios7);
+    strcpy(Config::BIOS9Path, bios9);
+    strcpy(Config::FirmwarePath, firmware);
+}
+
+DLL void SetThreadedRender(bool value) { threadedRender = value; }
 
 DLL void LoadROM(u8* file, s32 fileSize)
 {
