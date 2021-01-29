@@ -771,6 +771,8 @@ bool DoSavestate(Savestate* file)
     {
         file->Var32(&NumLagFrames);
         file->Bool32(&LagFrameFlag);
+        if (file->IsAtleastVersion(7, 2))
+            file->Var32(&TotalFrames);
     }
 
     // TODO: save KeyInput????
