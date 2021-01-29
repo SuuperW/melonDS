@@ -208,6 +208,8 @@ DLL void EraseUserSettings(u8* firmwareData, s32 firmwareLength)
 
 DLL void SetDirectBoot(bool value) { directBoot = value; }
 
+DLL void SetTimeAtBoot(u32 value) { Config::TimeAtBoot = value; }
+
 DLL bool UseSavestate(u8* data, s32 len)
 {
     Savestate* state = new Savestate(data, len);
