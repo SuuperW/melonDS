@@ -24,6 +24,7 @@ void* oglGetProcAddress(const char* proc)
 
 bool inited = false;
 
+char blankStr[] = { '\0' };
 u8* loadedROM;
 s32 loadedROMSize;
 bool directBoot = true;
@@ -84,7 +85,7 @@ DLL void LoadROM(u8* file, s32 fileSize)
     loadedROMSize = fileSize;
     memcpy(loadedROM, file, fileSize);
 
-    NDS::LoadROM(file, fileSize, directBoot);
+    NDS::LoadROM(file, fileSize, blankStr, directBoot);
 }
 
 DLL void ResetCounters()
@@ -120,7 +121,7 @@ DLL void FrameAdvance(u32 buttons, u8 touchX, u8 touchY)
         if (NDS::Running)
             NDS::Stop();
         else if (loadedROM)
-            NDS::LoadROM(loadedROM, loadedROMSize, directBoot);
+            NDS::LoadROM(loadedROM, loadedROMSize, blankStr, directBoot);
     }
 
     NDS::RunFrame();
